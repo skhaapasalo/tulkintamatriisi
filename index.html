@@ -14,7 +14,7 @@
    Teema: nappi "Teema: Väri / Mustavalko" sivun yläosassa, tai osoitteen perään ?teema=bw.
    Kalenteri: "Lataa kalenteriin (.ics)" tekee tiedoston Google- tai Apple-kalenteriin.
    Päivä/yö: nappi "🌙 Yötila / ☀️ Päivätila" (vain näytöllä, tuloste aina vaalea); oletus puhelimen oma asetus. ?tila=yo / ?tila=paiva.
-   Kieli: liput FI / SV / EN / ET / RU ohjauspalkissa (oletus suomi), tai osoitteen perään ?kieli=sv / en / et / ru.
+   Kieli: liput FI / SV / EN / ET / RU valikossa (☰) (oletus suomi), tai osoitteen perään ?kieli=sv / en / et / ru.
   Jos datalohko on tyhjä, sivu näyttää liittämiskentän.
 -->
 <style>
@@ -239,6 +239,10 @@ body.bw .jakso .liitemerkki { background:#fff !important; color:#000 !important;
 
 /* ===== Kieliliput ===== */
 #ohjaus .kielet { flex-basis:100%; display:flex; flex-wrap:wrap; gap:6px; }
+/* Pääpalkki yhdellä rivillä, muut valikossa (☰) */
+#ohjaus .paarivi { flex-basis:100%; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+#lisat { flex-basis:100%; display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:8px; border:1px solid #c5d3e8; border-radius:6px; background:#f3f7fd; }
+#lisat[hidden] { display:none; }
 #ohjaus .lippu { padding:5px 9px; font-size:13px; border-color:#999; color:#333; }
 #ohjaus .lippu.valittu { background:#0b4f9c; border-color:#0b4f9c; color:#fff; }
 .lap { white-space:nowrap; }
@@ -250,6 +254,7 @@ body.bw .jakso .liitemerkki { background:#fff !important; color:#000 !important;
   body.yo #tuloste { filter: invert(0.9) hue-rotate(180deg); }
   body.yo #tuloste section { border-bottom-color:#555; }
   body.yo #ohjaus { border-bottom-color:#555; }
+  body.yo #lisat { background:#1a1a1a; border-color:#444; }
   body.yo #ohjaus button { background:#1e1e1e; color:#9cc3ff; border-color:#4d7fc4; }
   body.yo #ohjaus button.valittu, body.yo #ohjaus .lippu.valittu { background:#2f6fc0; color:#fff; border-color:#2f6fc0; }
   body.yo #ohjaus .lippu { color:#ddd; border-color:#666; }
@@ -260,7 +265,9 @@ body.bw .jakso .liitemerkki { background:#fff !important; color:#000 !important;
 @media print { body.yo { background:#fff !important; } body.yo #tuloste { filter:none !important; } }
 /* ===== Puhelin ===== */
 @media screen and (max-width: 700px) {
-  #ohjaus { margin:8px; }
+  #ohjaus { margin:8px; padding-bottom:8px; }
+  #ohjaus .paarivi button { padding:7px 9px; }
+  #ohjaus .paarivi #tulostaNappi { display:none; }
   .jakso .sivu, .paiva .sivu { width:auto; padding:0 6px; }
   .jakso h1 { font-size:18pt; }
   .jakso td { font-size:10.5pt; padding:4px 2px; } .jakso th { font-size:9pt; padding:3px 2px; }
@@ -418,23 +425,28 @@ body.yo #syotto .ohjelaatikko { background:#1e1e1e; color:#ddd; }
 @media print { #syotto { display:none !important; } }
 </style></head><body data-teema="C">
 <div id="ohjaus">
-  <button id="teemaToggle" title="Vaihda väri / mustavalko">Teema: Väri</button>
-  <button id="herToggle" title="Näytä tai piilota herätykset">Herätykset</button>
-  <span class="vali"></span>
-  <button id="kalenteri" style="display:none" title="Lataa .ics-tiedosto Google- tai Apple-kalenteriin">📅 Lataa kalenteriin (.ics)</button>
-  <button id="tulostaNappi" onclick="window.print()">🖨 Tulosta</button>
-  <button id="tallennaLista" style="display:none">💾 Tallenna lista (.html)</button>
-  <button id="poistaLista" style="display:none">🗑 Poista lista</button>
-  <div class="kielet">
-    <button class="lippu" data-kieli="fi" title="Suomi">🇫🇮 FI</button>
-    <button class="lippu" data-kieli="sv" title="Svenska">🇸🇪 SV</button>
-    <button class="lippu" data-kieli="en" title="English">🇬🇧 EN</button>
-    <button class="lippu" data-kieli="et" title="Eesti">🇪🇪 ET</button>
-    <button class="lippu" data-kieli="ru" title="Русский">🇷🇺 RU</button>
-    <span class="vali"></span>
+  <!-- Pääpalkki (aina näkyvissä, yksi rivi). Harvemmin tarvittavat napit valikossa (☰), tila muistetaan. -->
+  <div class="paarivi">
+    <button id="valikko" aria-expanded="false" aria-controls="lisat">☰ Valikko</button>
     <button id="nakymaA" class="nakyma" style="display:none"></button>
     <button id="nakymaB" class="nakyma" style="display:none"></button>
+    <span class="vali"></span>
+    <button id="tulostaNappi" onclick="window.print()">🖨 Tulosta</button>
     <button id="yoToggle" title="Päivä- / yötila">🌙 Yötila</button>
+  </div>
+  <div id="lisat">
+    <div class="kielet">
+      <button class="lippu" data-kieli="fi" title="Suomi">🇫🇮 FI</button>
+      <button class="lippu" data-kieli="sv" title="Svenska">🇸🇪 SV</button>
+      <button class="lippu" data-kieli="en" title="English">🇬🇧 EN</button>
+      <button class="lippu" data-kieli="et" title="Eesti">🇪🇪 ET</button>
+      <button class="lippu" data-kieli="ru" title="Русский">🇷🇺 RU</button>
+    </div>
+    <button id="teemaToggle" title="Vaihda väri / mustavalko">Teema: Väri</button>
+    <button id="herToggle" title="Näytä tai piilota herätykset">Herätykset</button>
+    <button id="kalenteri" style="display:none" title="Lataa .ics-tiedosto Google- tai Apple-kalenteriin">📅 Lataa kalenteriin (.ics)</button>
+    <button id="tallennaLista" style="display:none">💾 Tallenna lista (.html)</button>
+    <button id="poistaLista" style="display:none">🗑 Poista lista</button>
   </div>
   <div id="selaus" style="display:none">
     <button id="selausVkEdel" class="vk" title="Viikko taaksepäin">«</button><button id="selausEdel" title="Edellinen">‹</button><button id="selausTanaan">Tänään</button><button id="selausSeur" title="Seuraava">›</button><button id="selausVkSeur" class="vk" title="Viikko eteenpäin">»</button>
@@ -619,7 +631,7 @@ var OHJEKIELET = {
       ajotoimisto: "ajotoimiston käytössä", ajotoimistoRivi: "ajotoimiston / työnjohdon käytössä", heratykset: "⏰ HERÄTYKSET",
       AUTO: "AUTO", KIERTO: "KIERTO", PAIKKA: "PAIKKA", perilla: "perillä", TAUKO: "TAUKO", HALLIAJO: "HALLIAJO", SIIRTOAJO: "SIIRTOAJO",
       BUSSILLA: "BUSSILLA", SIIRTYMA: "SIIRTYMÄ", HENKILOAUTOLLA: "HENKILÖAUTOLLA", tyoaika: "Työaika", tauko: "Tauko", varikko: "Varikko",
-      teemaVari: "Teema: Väri", teemaBW: "Teema: Mustavalko", herNappi: "Herätykset", kalNappi: "📅 Lataa kalenteriin (.ics)", hakuPh: "Auton nro", eiTiedossa: "ei tiedossa", tallenna: "Tallenna", sektoriPh: "esim. B3", eiListalla: "Ei tällä listalla", dirOts: "DIREKTIIVIKOULUTUS", dirId: "HENKILÖLLISYYSTODISTUS MUKAAN!", dirMyoh: "EHDOTTOMASTI EI SAA MYÖHÄSTYÄ!", dirLyh: "ID mukaan · älä myöhästy", kooste: "Vapaa-, vara- ja poissaolopäivät", palkkajakso: "Palkkajakso", kokoJakso: "Koko jakso yhteensä", historia: "Ajoneuvohistoria", tallennaLista: "💾 Tallenna lista (.html)", poistaLista: "🗑 Poista lista", poistaKysy: "Poistetaanko tallennettu lista tältä laitteelta?", palkkakausi: "Palkkakausi", maksupaiva: "maksupäivä", osittainen: "Osittainen palkkakausi – listalta puuttuu:", eiTietoja: "ei tietoja (julkaisematon)", eiJulkaistu: "Tätä palkkakautta ei ole vielä julkaistu IVU.padissa.", tanaan: "Tänään", yksiPv: "1 pv", kaikki: "kaikki", jaksoNav: "Jaksolista", yoOn: "☀️ Päivätila", yoOff: "🌙 Yötila", tulosta: "🖨 Tulosta",
+      teemaVari: "Teema: Väri", teemaBW: "Teema: Mustavalko", herNappi: "Herätykset", kalNappi: "📅 Lataa kalenteriin (.ics)", hakuPh: "Auton nro", eiTiedossa: "ei tiedossa", tallenna: "Tallenna", sektoriPh: "esim. B3", eiListalla: "Ei tällä listalla", dirOts: "DIREKTIIVIKOULUTUS", dirId: "HENKILÖLLISYYSTODISTUS MUKAAN!", dirMyoh: "EHDOTTOMASTI EI SAA MYÖHÄSTYÄ!", dirLyh: "ID mukaan · älä myöhästy", kooste: "Vapaa-, vara- ja poissaolopäivät", palkkajakso: "Palkkajakso", kokoJakso: "Koko jakso yhteensä", historia: "Ajoneuvohistoria", tallennaLista: "💾 Tallenna lista (.html)", valikko: "☰ Valikko", poistaLista: "🗑 Poista lista", poistaKysy: "Poistetaanko tallennettu lista tältä laitteelta?", palkkakausi: "Palkkakausi", maksupaiva: "maksupäivä", osittainen: "Osittainen palkkakausi – listalta puuttuu:", eiTietoja: "ei tietoja (julkaisematon)", eiJulkaistu: "Tätä palkkakautta ei ole vielä julkaistu IVU.padissa.", tanaan: "Tänään", yksiPv: "1 pv", kaikki: "kaikki", jaksoNav: "Jaksolista", yoOn: "☀️ Päivätila", yoOff: "🌙 Yötila", tulosta: "🖨 Tulosta",
       icsNimi: "Työvuorot", icsVuoro: "Vuoro", icsTauko: "Tauko", icsAuto: "Auto", icsKierto: "kierto", icsHer: "Herätykset", icsHer1: "herätys", otsikko: "Jakso",
       viikot: ["", "Viikko", "Kaksi viikkoa", "Kolme viikkoa", "Neljä viikkoa", "Viisi viikkoa", "Kuusi viikkoa"], viikkoa: "viikkoa", paivaa: "päivää",
       poissa: { VL: "vuosilomaa", PEK: "pekkasia", SLP: "sairaspoissaoloa" },
@@ -635,7 +647,7 @@ var OHJEKIELET = {
       ajotoimisto: "till trafikledningens förfogande", ajotoimistoRivi: "till trafikledningens / arbetsledningens förfogande", heratykset: "⏰ VÄCKNINGAR",
       AUTO: "BUSS", KIERTO: "OMLOPP", PAIKKA: "PLATS", perilla: "framme", TAUKO: "RAST", HALLIAJO: "DEPÅKÖRNING", SIIRTOAJO: "ÖVERFÖRING",
       BUSSILLA: "MED BUSS", SIIRTYMA: "FÖRFLYTTNING", HENKILOAUTOLLA: "MED BIL", tyoaika: "Arbetstid", tauko: "Rast", varikko: "Depå",
-      teemaVari: "Tema: Färg", teemaBW: "Tema: Svartvitt", herNappi: "Väckningar", kalNappi: "📅 Till kalendern (.ics)", hakuPh: "Bussnr", eiTiedossa: "okänd", tallenna: "Spara", sektoriPh: "t.ex. B3", eiListalla: "Inte på denna lista", dirOts: "DIREKTIVUTBILDNING", dirId: "TA MED IDENTITETSHANDLING!", dirMyoh: "FÅR ABSOLUT INTE KOMMA FÖRSENT!", dirLyh: "ID med · kom inte försent", kooste: "Lediga dagar, reserv och frånvaro", palkkajakso: "Löneperiod", kokoJakso: "Hela perioden totalt", historia: "Fordonshistorik", tallennaLista: "💾 Spara listan (.html)", poistaLista: "🗑 Ta bort listan", poistaKysy: "Ta bort den sparade listan från den här enheten?", palkkakausi: "Löneperiod", maksupaiva: "lönedag", osittainen: "Ofullständig löneperiod – saknas i listan:", eiTietoja: "inga uppgifter (opublicerat)", eiJulkaistu: "Denna löneperiod är ännu inte publicerad i IVU.pad.", tanaan: "Idag", yksiPv: "1 d", kaikki: "alla", jaksoNav: "Periodlista", yoOn: "☀️ Dagläge", yoOff: "🌙 Nattläge", tulosta: "🖨 Skriv ut",
+      teemaVari: "Tema: Färg", teemaBW: "Tema: Svartvitt", herNappi: "Väckningar", kalNappi: "📅 Till kalendern (.ics)", hakuPh: "Bussnr", eiTiedossa: "okänd", tallenna: "Spara", sektoriPh: "t.ex. B3", eiListalla: "Inte på denna lista", dirOts: "DIREKTIVUTBILDNING", dirId: "TA MED IDENTITETSHANDLING!", dirMyoh: "FÅR ABSOLUT INTE KOMMA FÖRSENT!", dirLyh: "ID med · kom inte försent", kooste: "Lediga dagar, reserv och frånvaro", palkkajakso: "Löneperiod", kokoJakso: "Hela perioden totalt", historia: "Fordonshistorik", tallennaLista: "💾 Spara listan (.html)", valikko: "☰ Meny", poistaLista: "🗑 Ta bort listan", poistaKysy: "Ta bort den sparade listan från den här enheten?", palkkakausi: "Löneperiod", maksupaiva: "lönedag", osittainen: "Ofullständig löneperiod – saknas i listan:", eiTietoja: "inga uppgifter (opublicerat)", eiJulkaistu: "Denna löneperiod är ännu inte publicerad i IVU.pad.", tanaan: "Idag", yksiPv: "1 d", kaikki: "alla", jaksoNav: "Periodlista", yoOn: "☀️ Dagläge", yoOff: "🌙 Nattläge", tulosta: "🖨 Skriv ut",
       icsNimi: "Arbetsskift", icsVuoro: "Skift", icsTauko: "Rast", icsAuto: "Buss", icsKierto: "omlopp", icsHer: "Väckningar", icsHer1: "väckning", otsikko: "Period",
       viikot: ["", "En vecka", "Två veckor", "Tre veckor", "Fyra veckor", "Fem veckor", "Sex veckor"], viikkoa: "veckor", paivaa: "dagar",
       poissa: { VL: "semester", PEK: "pekkasledigt", SLP: "sjukfrånvaro" },
@@ -653,7 +665,7 @@ var OHJEKIELET = {
       ajotoimisto: "at dispatch's disposal", ajotoimistoRivi: "at dispatch / supervisor's disposal", heratykset: "⏰ ALARMS",
       AUTO: "BUS", KIERTO: "BLOCK", PAIKKA: "BAY", perilla: "arr.", TAUKO: "BREAK", HALLIAJO: "DEPOT RUN", SIIRTOAJO: "TRANSFER RUN",
       BUSSILLA: "BY BUS", SIIRTYMA: "TRANSFER", HENKILOAUTOLLA: "BY CAR", tyoaika: "Working time", tauko: "Break", varikko: "Depot",
-      teemaVari: "Theme: Colour", teemaBW: "Theme: B&W", herNappi: "Alarms", kalNappi: "📅 Add to calendar (.ics)", hakuPh: "Bus no.", eiTiedossa: "unknown", tallenna: "Save", sektoriPh: "e.g. B3", eiListalla: "Not on this list", dirOts: "DIRECTIVE TRAINING", dirId: "BRING YOUR ID!", dirMyoh: "BEING LATE IS ABSOLUTELY NOT ALLOWED!", dirLyh: "bring ID · do not be late", kooste: "Days off, standby and absences", palkkajakso: "Pay period", kokoJakso: "Whole period total", historia: "Vehicle history", tallennaLista: "💾 Save list (.html)", poistaLista: "🗑 Delete list", poistaKysy: "Delete the saved list from this device?", palkkakausi: "Pay period", maksupaiva: "payday", osittainen: "Incomplete pay period – missing from the list:", eiTietoja: "no data (not published)", eiJulkaistu: "This pay period has not been published in IVU.pad yet.", tanaan: "Today", yksiPv: "1 day", kaikki: "all", jaksoNav: "Period list", yoOn: "☀️ Light mode", yoOff: "🌙 Dark mode", tulosta: "🖨 Print",
+      teemaVari: "Theme: Colour", teemaBW: "Theme: B&W", herNappi: "Alarms", kalNappi: "📅 Add to calendar (.ics)", hakuPh: "Bus no.", eiTiedossa: "unknown", tallenna: "Save", sektoriPh: "e.g. B3", eiListalla: "Not on this list", dirOts: "DIRECTIVE TRAINING", dirId: "BRING YOUR ID!", dirMyoh: "BEING LATE IS ABSOLUTELY NOT ALLOWED!", dirLyh: "bring ID · do not be late", kooste: "Days off, standby and absences", palkkajakso: "Pay period", kokoJakso: "Whole period total", historia: "Vehicle history", tallennaLista: "💾 Save list (.html)", valikko: "☰ Menu", poistaLista: "🗑 Delete list", poistaKysy: "Delete the saved list from this device?", palkkakausi: "Pay period", maksupaiva: "payday", osittainen: "Incomplete pay period – missing from the list:", eiTietoja: "no data (not published)", eiJulkaistu: "This pay period has not been published in IVU.pad yet.", tanaan: "Today", yksiPv: "1 day", kaikki: "all", jaksoNav: "Period list", yoOn: "☀️ Light mode", yoOff: "🌙 Dark mode", tulosta: "🖨 Print",
       icsNimi: "Work shifts", icsVuoro: "Shift", icsTauko: "Break", icsAuto: "Bus", icsKierto: "block", icsHer: "Alarms", icsHer1: "alarm", otsikko: "Period",
       viikot: ["", "One week", "Two weeks", "Three weeks", "Four weeks", "Five weeks", "Six weeks"], viikkoa: "weeks", paivaa: "days",
       poissa: { VL: "of annual leave", PEK: "of Pekkanen days off", SLP: "of sick leave" },
@@ -671,7 +683,7 @@ var OHJEKIELET = {
       ajotoimisto: "dispetšeri käsutuses", ajotoimistoRivi: "dispetšeri / juhtkonna käsutuses", heratykset: "⏰ ÄRATUSED",
       AUTO: "BUSS", KIERTO: "RING", PAIKKA: "KOHT", perilla: "kohal", TAUKO: "PAUS", HALLIAJO: "DEPOOSÕIT", SIIRTOAJO: "ÜLESÕIT",
       BUSSILLA: "BUSSIGA", SIIRTYMA: "ÜLEMINEK", HENKILOAUTOLLA: "AUTOGA", tyoaika: "Tööaeg", tauko: "Paus", varikko: "Depoo",
-      teemaVari: "Teema: Värviline", teemaBW: "Teema: Must-valge", herNappi: "Äratused", kalNappi: "📅 Lisa kalendrisse (.ics)", hakuPh: "Bussi nr", eiTiedossa: "teadmata", tallenna: "Salvesta", sektoriPh: "nt B3", eiListalla: "Pole selles nimekirjas", dirOts: "DIREKTIIVI KOOLITUS", dirId: "ISIKUTUNNISTUS KAASA!", dirMyoh: "HILINEMINE ON RANGELT KEELATUD!", dirLyh: "ID kaasa · ära hiline", kooste: "Vabad, reservi- ja puudumispäevad", palkkajakso: "Palgaperiood", kokoJakso: "Kogu periood kokku", historia: "Sõidukiajalugu", tallennaLista: "💾 Salvesta nimekiri (.html)", poistaLista: "🗑 Kustuta nimekiri", poistaKysy: "Kas kustutada salvestatud nimekiri sellest seadmest?", palkkakausi: "Palgaperiood", maksupaiva: "palgapäev", osittainen: "Mittetäielik palgaperiood – nimekirjast puudub:", eiTietoja: "andmed puuduvad (avaldamata)", eiJulkaistu: "Seda palgaperioodi pole IVU.padis veel avaldatud.", tanaan: "Täna", yksiPv: "1 p", kaikki: "kõik", jaksoNav: "Perioodi nimekiri", yoOn: "☀️ Päevarežiim", yoOff: "🌙 Öörežiim", tulosta: "🖨 Prindi",
+      teemaVari: "Teema: Värviline", teemaBW: "Teema: Must-valge", herNappi: "Äratused", kalNappi: "📅 Lisa kalendrisse (.ics)", hakuPh: "Bussi nr", eiTiedossa: "teadmata", tallenna: "Salvesta", sektoriPh: "nt B3", eiListalla: "Pole selles nimekirjas", dirOts: "DIREKTIIVI KOOLITUS", dirId: "ISIKUTUNNISTUS KAASA!", dirMyoh: "HILINEMINE ON RANGELT KEELATUD!", dirLyh: "ID kaasa · ära hiline", kooste: "Vabad, reservi- ja puudumispäevad", palkkajakso: "Palgaperiood", kokoJakso: "Kogu periood kokku", historia: "Sõidukiajalugu", tallennaLista: "💾 Salvesta nimekiri (.html)", valikko: "☰ Menüü", poistaLista: "🗑 Kustuta nimekiri", poistaKysy: "Kas kustutada salvestatud nimekiri sellest seadmest?", palkkakausi: "Palgaperiood", maksupaiva: "palgapäev", osittainen: "Mittetäielik palgaperiood – nimekirjast puudub:", eiTietoja: "andmed puuduvad (avaldamata)", eiJulkaistu: "Seda palgaperioodi pole IVU.padis veel avaldatud.", tanaan: "Täna", yksiPv: "1 p", kaikki: "kõik", jaksoNav: "Perioodi nimekiri", yoOn: "☀️ Päevarežiim", yoOff: "🌙 Öörežiim", tulosta: "🖨 Prindi",
       icsNimi: "Töövahetused", icsVuoro: "Vahetus", icsTauko: "Paus", icsAuto: "Buss", icsKierto: "ring", icsHer: "Äratused", icsHer1: "äratus", otsikko: "Periood",
       viikot: ["", "Üks nädal", "Kaks nädalat", "Kolm nädalat", "Neli nädalat", "Viis nädalat", "Kuus nädalat"], viikkoa: "nädalat", paivaa: "päeva",
       poissa: { VL: "puhkust", PEK: "pekkase vabu päevi", SLP: "haiguspuudumist" },
@@ -689,7 +701,7 @@ var OHJEKIELET = {
       ajotoimisto: "в распоряжении диспетчерской", ajotoimistoRivi: "в распоряжении диспетчерской / руководства", heratykset: "⏰ БУДИЛЬНИКИ",
       AUTO: "АВТОБУС", KIERTO: "ОБОРОТ", PAIKKA: "МЕСТО", perilla: "приб.", TAUKO: "ПЕРЕРЫВ", HALLIAJO: "НУЛЕВОЙ РЕЙС", SIIRTOAJO: "ПЕРЕГОН",
       BUSSILLA: "НА АВТОБУСЕ", SIIRTYMA: "ПЕРЕЕЗД", HENKILOAUTOLLA: "НА ЛЕГКОВОМ", tyoaika: "Рабочее время", tauko: "Перерыв", varikko: "Депо",
-      teemaVari: "Тема: Цвет", teemaBW: "Тема: Ч/Б", herNappi: "Будильники", kalNappi: "📅 В календарь (.ics)", hakuPh: "№ автобуса", eiTiedossa: "неизвестно", tallenna: "Сохранить", sektoriPh: "напр. B3", eiListalla: "Нет в этом списке", dirOts: "ОБУЧЕНИЕ ПО ДИРЕКТИВЕ", dirId: "ВОЗЬМИТЕ УДОСТОВЕРЕНИЕ ЛИЧНОСТИ!", dirMyoh: "ОПАЗДЫВАТЬ СТРОГО ЗАПРЕЩЕНО!", dirLyh: "документ · не опаздывать", kooste: "Выходные, резерв и отсутствия", palkkajakso: "Расчётный период", kokoJakso: "Весь период итого", historia: "История ТС", tallennaLista: "💾 Сохранить список (.html)", poistaLista: "🗑 Удалить список", poistaKysy: "Удалить сохранённый список с этого устройства?", palkkakausi: "Расчётный период", maksupaiva: "день выплаты", osittainen: "Неполный расчётный период – в списке отсутствует:", eiTietoja: "нет данных (не опубликовано)", eiJulkaistu: "Этот расчётный период ещё не опубликован в IVU.pad.", tanaan: "Сегодня", yksiPv: "1 дн.", kaikki: "все", jaksoNav: "Список периода", yoOn: "☀️ Дневной режим", yoOff: "🌙 Ночной режим", tulosta: "🖨 Печать",
+      teemaVari: "Тема: Цвет", teemaBW: "Тема: Ч/Б", herNappi: "Будильники", kalNappi: "📅 В календарь (.ics)", hakuPh: "№ автобуса", eiTiedossa: "неизвестно", tallenna: "Сохранить", sektoriPh: "напр. B3", eiListalla: "Нет в этом списке", dirOts: "ОБУЧЕНИЕ ПО ДИРЕКТИВЕ", dirId: "ВОЗЬМИТЕ УДОСТОВЕРЕНИЕ ЛИЧНОСТИ!", dirMyoh: "ОПАЗДЫВАТЬ СТРОГО ЗАПРЕЩЕНО!", dirLyh: "документ · не опаздывать", kooste: "Выходные, резерв и отсутствия", palkkajakso: "Расчётный период", kokoJakso: "Весь период итого", historia: "История ТС", tallennaLista: "💾 Сохранить список (.html)", valikko: "☰ Меню", poistaLista: "🗑 Удалить список", poistaKysy: "Удалить сохранённый список с этого устройства?", palkkakausi: "Расчётный период", maksupaiva: "день выплаты", osittainen: "Неполный расчётный период – в списке отсутствует:", eiTietoja: "нет данных (не опубликовано)", eiJulkaistu: "Этот расчётный период ещё не опубликован в IVU.pad.", tanaan: "Сегодня", yksiPv: "1 дн.", kaikki: "все", jaksoNav: "Список периода", yoOn: "☀️ Дневной режим", yoOff: "🌙 Ночной режим", tulosta: "🖨 Печать",
       icsNimi: "Рабочие смены", icsVuoro: "Смена", icsTauko: "Перерыв", icsAuto: "Автобус", icsKierto: "оборот", icsHer: "Будильники", icsHer1: "будильник", otsikko: "Период",
       viikot: ["", "Одна неделя", "Две недели", "Три недели", "Четыре недели", "Пять недель", "Шесть недель"], viikkoa: "недель", paivaa: "дн.",
       poissa: { VL: "отпуска", PEK: "выходных Pekkanen", SLP: "больничного" },
@@ -1315,7 +1327,7 @@ var OHJEKIELET = {
     if (g("selausVkSeur")) g("selausVkSeur").onclick = function () { NAKYMA.i = viikkoHyppy(1); asetaNakyma("yksi"); };
   })();
 
-  /* ---- Kielivalinta: liput ohjauspalkissa, muistetaan; ?kieli=sv / en ---- */
+  /* ---- Kielivalinta: liput valikossa (☰), muistetaan; ?kieli=sv / en ---- */
   function asetaKieli(k) {
     KIELI = SANAT[k] ? k : "fi"; document.documentElement.lang = KIELI;
     try { localStorage.setItem("tyovuoro_kieli", KIELI); } catch (x) {}
@@ -1327,6 +1339,7 @@ var OHJEKIELET = {
     var tl = document.getElementById("tallennaLista"); if (tl) tl.textContent = T("tallennaLista");
     var pl = document.getElementById("poistaLista"); if (pl) pl.textContent = T("poistaLista");
     var yb = document.getElementById("yoToggle"); if (yb) yb.textContent = document.body.classList.contains("yo") ? T("yoOn") : T("yoOff");
+    var vb = document.getElementById("valikko"); if (vb) vb.textContent = T("valikko") + " · " + KIELI.toUpperCase();
     ohjeKieli();
     if (piirra.viimeisin) piirra(piirra.viimeisin[0], piirra.viimeisin[1]);
   }
@@ -1346,6 +1359,18 @@ var OHJEKIELET = {
     var mo = g("mobiiliOhje"), ua = navigator.userAgent || "";
     if (mo && /Android/i.test(ua)) { var i = mo.querySelector(".alusta.ios"), a = mo.querySelector(".alusta.android"); if (i && a) a.parentNode.insertBefore(a, i); }
   }
+  /* ---- Valikko (☰): harvemmin tarvittavat napit ja kielet piiloon, tila muistetaan. Syöttösivulla aina auki (kielivalinta). ---- */
+  function asetaValikko(auki, muista) {
+    var l = document.getElementById("lisat"), v = document.getElementById("valikko"); if (!l || !v) return;
+    l.hidden = !auki; v.setAttribute("aria-expanded", auki ? "true" : "false"); v.classList.toggle("valittu", auki);
+    if (muista) { try { localStorage.setItem("tvl_valikko", auki ? "auki" : "kiinni"); } catch (x) {} } }
+  function valikkoMuistista() { var s = null; try { s = localStorage.getItem("tvl_valikko"); } catch (x) {}
+    return /[?&]valikko=auki\b/i.test(location.search) || s === "auki"; }
+  (function () {
+    var vb = document.getElementById("valikko");
+    if (vb) vb.onclick = function () { asetaValikko(document.getElementById("lisat").hidden, true); };
+    asetaValikko(valikkoMuistista());
+  })();
   (function () {
     var k = (/[?&]kieli=(fi|sv|en|et|ru)\b/i.exec(location.search) || [])[1];
     if (!k) { try { k = localStorage.getItem("tyovuoro_kieli"); } catch (x) {} }
@@ -1357,7 +1382,7 @@ var OHJEKIELET = {
   var data = document.getElementById("vuorodata").textContent;
   var nimi = document.getElementById("vuorodata").getAttribute("data-nimi") || "";
   if (!/^D\|/m.test(data)) {
-    document.getElementById("syotto").style.display = "block";
+    document.getElementById("syotto").style.display = "block"; asetaValikko(true);
     /* Kosketuslaitteella avataan puhelinohje valmiiksi ja näytetään oman alustan ohje ensin. */
     var mo = document.getElementById("mobiiliOhje"), ua = navigator.userAgent || "";
     var kosketus = /Android|iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
@@ -1383,7 +1408,7 @@ var OHJEKIELET = {
     document.getElementById("nayta").onclick = function () {
       var teksti = document.getElementById("liita").value, nk = document.getElementById("nimikentta").value;
       if (piirra(teksti, nk)) {
-        document.getElementById("syotto").style.display = "none";
+        document.getElementById("syotto").style.display = "none"; asetaValikko(valikkoMuistista());
         var pb = document.getElementById("poistaLista");
         if (verkossa) { try { localStorage.setItem(MUISTI, JSON.stringify({ d: teksti, n: nk })); } catch (x) {}
           if (pb) { pb.style.display = ""; pb.onclick = function () { if (!confirm(T("poistaKysy"))) return;
