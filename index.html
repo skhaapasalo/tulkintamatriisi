@@ -407,6 +407,9 @@ body.bw .jakso .osittainen { background:#fff !important; color:#000 !important; 
 /* Keskiyön jälkeen päättyvä vuoro: 00:03+1 */
 sup.yli { font-size:.6em; font-weight:bold; margin-left:1px; }
 
+#vianLaatikko { position:fixed; left:12px; right:12px; bottom:12px; z-index:99; padding:10px 14px; background:#fff3cd; color:#000; border:2px solid #b8860b; border-radius:8px; font:15px Arial,sans-serif; box-shadow:0 3px 10px #0004; }
+#vianLaatikko p { margin:0 0 8px; } #vianLaatikko button { font-size:15px; padding:6px 12px; margin-right:8px; }
+@media print { #vianLaatikko { display:none !important; } }
 #syotto { display:none; max-width:180mm; margin:20px auto; font-family:Arial,sans-serif; }
 #syotto textarea { width:100%; height:300px; font-family:monospace; font-size:11px; }
 #syotto input { width:100%; font-size:14px; padding:4px; margin:6px 0; }
@@ -447,6 +450,7 @@ body.yo #syotto .ohjelaatikko { background:#1e1e1e; color:#ddd; }
     <button id="kalenteri" style="display:none" title="Lataa .ics-tiedosto Google- tai Apple-kalenteriin">📅 Lataa kalenteriin (.ics)</button>
     <button id="tallennaLista" style="display:none">💾 Tallenna lista (.html)</button>
     <button id="poistaLista" style="display:none">🗑 Poista lista</button>
+    <button id="vianetsinta" title="Vianetsintätiedosto, jos jokin näyttää väärältä">🐞 Vianetsintä</button>
   </div>
   <div id="selaus" style="display:none">
     <button id="selausVkEdel" class="vk" title="Viikko taaksepäin">«</button><button id="selausEdel" title="Edellinen">‹</button><button id="selausTanaan">Tänään</button><button id="selausSeur" title="Seuraava">›</button><button id="selausVkSeur" class="vk" title="Viikko eteenpäin">»</button>
@@ -790,20 +794,70 @@ var OHJEKIELET = {
   function aikaT(v) { var m = /^\s*(\d{1,2})[:.](\d\d)\+\s*$/.exec(v || ""); return m ? ("0" + m[1]).slice(-2) + ":" + m[2] + "+1" : (v || ""); }
   function aikaH(v) { var s = aikaT(v); return /\+1$/.test(s) ? h(s.slice(0, -2)) + '<sup class="yli">+1</sup>' : h(s); }
 
+  /* VIANETSINTA-ALKU – vianetsintätiedosto (☰ → 🐞). tee_pohja.py:n VIANETSINTA = False poistaa tämän kokonaan.
+     Tiedosto tallennetaan vain kuljettajan omalle laitteelle; mitään ei lähetetä. Nimirivi (N|) poistetaan. */
+  var VIAN = { versio: "4.3.0", virheet: [] };
+  [["fi", "🐞 Vianetsintä", "Tehdään vianetsintätiedosto tälle laitteelle. Siinä on vuorosi ilman nimeä. Anna se vain sille, jota pyysit apuun.", "Jokin meni pieleen. Lataa vianetsintätiedosto ja anna se sille, jolta sait työkalun.", "Datasta ei löytynyt yhtään päivää.", "Lataa vianetsintätiedosto", "Sulje"],
+   ["sv", "🐞 Felsökning", "En felsökningsfil sparas på den här enheten. Den innehåller dina turer utan namn. Ge den bara till den du bett om hjälp.", "Något gick fel. Ladda ner felsökningsfilen och ge den till den som gav dig verktyget.", "Inga dagar hittades i datan.", "Ladda ner felsökningsfil", "Stäng"],
+   ["en", "🐞 Troubleshooting", "A troubleshooting file will be saved on this device. It contains your shifts without your name. Only give it to the person you asked for help.", "Something went wrong. Download the troubleshooting file and give it to the person who gave you this tool.", "No days were found in the data.", "Download troubleshooting file", "Close"],
+   ["et", "🐞 Veaotsing", "Sellesse seadmesse salvestatakse veaotsingu fail. Selles on sinu vahetused ilma nimeta. Anna see ainult sellele, kellelt abi palusid.", "Midagi läks valesti. Laadi alla veaotsingu fail ja anna see sellele, kellelt tööriista said.", "Andmetest ei leitud ühtegi päeva.", "Laadi alla veaotsingu fail", "Sulge"],
+   ["ru", "🐞 Диагностика", "На это устройство будет сохранён файл диагностики. В нём ваши смены без имени. Передайте его только тому, кого вы попросили о помощи.", "Что-то пошло не так. Скачайте файл диагностики и передайте его тому, от кого вы получили этот инструмент.", "В данных не найдено ни одного дня.", "Скачать файл диагностики", "Закрыть"]
+  ].forEach(function (r) { var S = SANAT[r[0]]; S.vianetsinta = r[1]; S.vianInfo = r[2]; S.vianVirhe = r[3]; S.vianEiPaivia = r[4]; S.vianLataa = r[5]; S.vianSulje = r[6]; });
+  window.addEventListener("error", function (e) { vianVirhe((e.message || "virhe") + (e.lineno ? " (rivi " + e.lineno + ":" + e.colno + ")" : "")); });
+  window.addEventListener("unhandledrejection", function (e) { vianVirhe("Promise: " + String(e.reason && e.reason.message || e.reason)); });
+  function vianData() {
+    var v = (piirra.viimeisin && piirra.viimeisin[0]) || (document.getElementById("liita") || {}).value || "";
+    if (!/^\s*D\|/m.test(v)) v = document.getElementById("vuorodata").textContent;
+    return String(v).replace(/^\s*N\|.*$/gm, "[nimi poistettu]").trim();
+  }
+  function vianTiedosto() {
+    var g = function (f) { try { return f(); } catch (x) { return "?"; } }, t = lue.tilasto || {}, d = new Date(), z = function (n) { return ("0" + n).slice(-2); };
+    var rivit = ["TULKINTAMATRIISI – VIANETSINTÄTIEDOSTO", "Versio: " + VIAN.versio, "Aika: " + d.toString(),
+      "Sivu: " + location.protocol + "//" + (location.protocol === "file:" ? "…/" + location.pathname.split("/").pop() : location.host + location.pathname) + location.search,
+      "Selain: " + navigator.userAgent, "Näyttö: " + innerWidth + "x" + innerHeight + " @" + (window.devicePixelRatio || 1) + ", kosketus " + (navigator.maxTouchPoints || 0),
+      "Lisäosa: " + (window.TVL_LISAOSA ? "kyllä" : "ei") + " · avaaja: " + (window.opener ? "kyllä" : "ei"),
+      "Kieli: " + KIELI + " · näkymä: " + g(function () { return NAKYMA.tila + " (osio " + NAKYMA.i + ")"; }) + " · yötila: " + document.body.classList.contains("yo") + " · teema: " + (document.body.classList.contains("bw") ? "BW" : "C"),
+      "Lista piirretty: " + (piirra.viimeisin ? "kyllä" : "ei") + " · osioita: " + document.querySelectorAll("#tuloste section").length,
+      "", "== KORJAUKSET (datan luku) ==", "Päiviä: " + (t.paivia == null ? "?" : t.paivia) + " · tuplapäiviä poistettu: " + (t.tuplat || 0) + " · ohitettuja rivejä: " + (t.ohitettu || []).length];
+    (t.ohitettu || []).slice(0, 30).forEach(function (l) { rivit.push("  ohitettu: " + l.slice(0, 160)); });
+    rivit.push("", "== VIRHEET ==");
+    if (!VIAN.virheet.length) rivit.push("ei virheitä"); else VIAN.virheet.forEach(function (v) { rivit.push(v); });
+    rivit.push("", "== DATA (nimi poistettu) ==", vianData(), "");
+    lataa("tvl_vianetsinta_" + d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()) + "_" + z(d.getHours()) + z(d.getMinutes()) + ".txt", rivit.join("\r\n"), "text/plain;charset=utf-8");
+  }
+  /* Virhelaatikko: tulee itse esiin, jos sivu kaatuu tai datasta ei löydy päiviä. Teksti textContentilla (ei HTML:ää). */
+  function vianVirhe(viesti) {
+    VIAN.virheet.push(new Date().toTimeString().slice(0, 8) + " " + String(viesti).slice(0, 500));
+    var b = document.getElementById("vianLaatikko");
+    if (!b) { b = document.createElement("div"); b.id = "vianLaatikko"; b.setAttribute("role", "alert");
+      var p = document.createElement("p"), n = document.createElement("button"), s = document.createElement("button");
+      n.className = "vianLataa"; s.className = "vianSulje";
+      n.addEventListener("click", vianTiedosto); s.addEventListener("click", function () { b.remove(); });
+      b.appendChild(p); b.appendChild(n); b.appendChild(s); (document.body || document.documentElement).appendChild(b); }
+    b.querySelector("p").textContent = T("vianVirhe") + " (" + String(viesti).slice(0, 120) + ")";
+    b.querySelector(".vianLataa").textContent = T("vianLataa"); b.querySelector(".vianSulje").textContent = T("vianSulje");
+  }
+  (function () { var vn = document.getElementById("vianetsinta");
+    if (vn) vn.addEventListener("click", function () { if (confirm(T("vianInfo"))) vianTiedosto(); }); })();
+  /* VIANETSINTA-LOPPU */
+
   /* Vahinkojen korjaus: sama päivä moneen kertaan (esim. liitetty kahdesti) -> pidetään se, jossa on eniten tietoa
      (tasapelissä myöhempi). Päivät järjestetään. Rivit ennen ensimmäistä päivää ja muu sotku ohitetaan. */
   function lue(text) {
-    var ryhmat = {}, nyk = null;
+    var ryhmat = {}, nyk = null, tilasto = { ohitettu: [], tuplat: 0, paivia: 0 };
     String(text || "").split(/\r?\n/).forEach(function (l) {
       l = l.trim();
       if (!l || l.indexOf("N|") === 0 || l.indexOf("P|") === 0) return;
       if (l.indexOf("D|") === 0) {
-        var m = /(\d\d)\/(\d\d)\/(\d{4})/.exec(l); if (!m) { nyk = null; return; }
+        var m = /(\d\d)\/(\d\d)\/(\d{4})/.exec(l); if (!m) { nyk = null; tilasto.ohitettu.push(l); return; }
         nyk = { d: new Date(+m[3], +m[2] - 1, +m[1]), rivit: [], arvo: 0 };
         (ryhmat[m[3] + m[2] + m[1]] = ryhmat[m[3] + m[2] + m[1]] || []).push(nyk);
       } else if (nyk && (l.indexOf("B|") === 0 || l.indexOf("X|") === 0 || /^\d{1,2}[:.]\d\d\+?\|/.test(l))) {
         nyk.rivit.push(l); if (l.indexOf("X|") !== 0) nyk.arvo++; }
+      else tilasto.ohitettu.push(l);
     });
+    Object.keys(ryhmat).forEach(function (k) { tilasto.tuplat += ryhmat[k].length - 1; tilasto.paivia++; });
+    lue.tilasto = tilasto;   /* mitä korjattiin */
     return Object.keys(ryhmat).sort().map(function (k) {
       var paras = ryhmat[k].reduce(function (a, b) { return b.arvo >= a.arvo ? b : a; });
       return lueP(paras.d, paras.rivit); });
@@ -1338,6 +1392,7 @@ var OHJEKIELET = {
     var pb = document.getElementById("tulostaNappi"); if (pb) pb.textContent = T("tulosta");
     var tl = document.getElementById("tallennaLista"); if (tl) tl.textContent = T("tallennaLista");
     var pl = document.getElementById("poistaLista"); if (pl) pl.textContent = T("poistaLista");
+    /* VIANETSINTA-ALKU */ var vn = document.getElementById("vianetsinta"); if (vn) vn.textContent = T("vianetsinta"); /* VIANETSINTA-LOPPU */
     var yb = document.getElementById("yoToggle"); if (yb) yb.textContent = document.body.classList.contains("yo") ? T("yoOn") : T("yoOff");
     var vb = document.getElementById("valikko"); if (vb) vb.textContent = T("valikko") + " · " + KIELI.toUpperCase();
     ohjeKieli();
@@ -1407,7 +1462,9 @@ var OHJEKIELET = {
     var verkossa = location.protocol === "https:" && !window.TVL_LISAOSA;
     document.getElementById("nayta").onclick = function () {
       var teksti = document.getElementById("liita").value, nk = document.getElementById("nimikentta").value;
-      if (piirra(teksti, nk)) {
+      var ok = piirra(teksti, nk);
+      /* VIANETSINTA-ALKU */ if (!ok && teksti.trim()) vianVirhe(T("vianEiPaivia")); /* VIANETSINTA-LOPPU */
+      if (ok) {
         document.getElementById("syotto").style.display = "none"; asetaValikko(valikkoMuistista());
         var pb = document.getElementById("poistaLista");
         if (verkossa) { try { localStorage.setItem(MUISTI, JSON.stringify({ d: teksti, n: nk })); } catch (x) {}
