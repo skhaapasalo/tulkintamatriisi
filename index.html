@@ -778,15 +778,29 @@ var OHJEKIELET = {
   function aikaT(v) { var m = /^\s*(\d{1,2})[:.](\d\d)\+\s*$/.exec(v || ""); return m ? ("0" + m[1]).slice(-2) + ":" + m[2] + "+1" : (v || ""); }
   function aikaH(v) { var s = aikaT(v); return /\+1$/.test(s) ? h(s.slice(0, -2)) + '<sup class="yli">+1</sup>' : h(s); }
 
+  /* Vahinkojen korjaus: sama päivä moneen kertaan (esim. liitetty kahdesti) -> pidetään se, jossa on eniten tietoa
+     (tasapelissä myöhempi). Päivät järjestetään. Rivit ennen ensimmäistä päivää ja muu sotku ohitetaan. */
   function lue(text) {
-    var paivat = [];
-    text.split(/\r?\n/).forEach(function (l) {
-      if (!l.trim() || l.indexOf("N|") === 0 || l.indexOf("P|") === 0) return;
-      if (l.indexOf("X|") === 0) { if (paivat.length) paivat[paivat.length - 1].eiTietoja = true; return; }
+    var ryhmat = {}, nyk = null;
+    String(text || "").split(/\r?\n/).forEach(function (l) {
+      l = l.trim();
+      if (!l || l.indexOf("N|") === 0 || l.indexOf("P|") === 0) return;
       if (l.indexOf("D|") === 0) {
-        var m = /(\d\d)\/(\d\d)\/(\d{4})/.exec(l);
-        paivat.push({ d: new Date(+m[3], +m[2] - 1, +m[1]), lohkot: [] });
-      } else if (l.indexOf("B|") === 0) {
+        var m = /(\d\d)\/(\d\d)\/(\d{4})/.exec(l); if (!m) { nyk = null; return; }
+        nyk = { d: new Date(+m[3], +m[2] - 1, +m[1]), rivit: [], arvo: 0 };
+        (ryhmat[m[3] + m[2] + m[1]] = ryhmat[m[3] + m[2] + m[1]] || []).push(nyk);
+      } else if (nyk && (l.indexOf("B|") === 0 || l.indexOf("X|") === 0 || /^\d{1,2}[:.]\d\d\+?\|/.test(l))) {
+        nyk.rivit.push(l); if (l.indexOf("X|") !== 0) nyk.arvo++; }
+    });
+    return Object.keys(ryhmat).sort().map(function (k) {
+      var paras = ryhmat[k].reduce(function (a, b) { return b.arvo >= a.arvo ? b : a; });
+      return lueP(paras.d, paras.rivit); });
+  }
+  function lueP(d, rivit) {
+    var paivat = [{ d: d, lohkot: [] }];
+    rivit.forEach(function (l) {
+      if (l.indexOf("X|") === 0) { paivat[0].eiTietoja = true; return; }
+      if (l.indexOf("B|") === 0) {
         var osat = l.slice(2).split(" ~ "), p = osat[0].split("|");
         var lo = { nimi: p[0], kv: [], ev: [] }, loput = p.slice(1);
         if (loput.length && loput[0].indexOf(" : ") >= 0) { var kv = loput.shift().split(" : "); lo.kv.push([kv[0], kv.slice(1).join(" : ")]); }
@@ -796,7 +810,7 @@ var OHJEKIELET = {
         paivat[paivat.length - 1].lohkot.push(lo);
       } else {
         var q = l.split("|"); while (q.length < 9) q.push("");
-        var lb = paivat[paivat.length - 1].lohkot; var lo2 = lb[lb.length - 1];
+        var lb = paivat[paivat.length - 1].lohkot; var lo2 = lb[lb.length - 1]; if (!lo2) return;
         var e = { alku: q[0], loppu: q[1], tyyppi: TYYPIT[q[2]] || q[2], mista: q[3], mihin: q[4], tasaus: [] };
         if (q[5]) e.linja = q[5];
         if (q[2] === "L" || q[2] === "H") { if (q[6]) lo2._auto = [q[6], q[7]]; if (lo2._auto) { e.auto = lo2._auto[0]; e.kierto = lo2._auto[1]; } }
@@ -805,7 +819,7 @@ var OHJEKIELET = {
         lo2.ev.push(e);
       }
     });
-    return paivat;
+    return paivat[0];
   }
   function kvObj(lo) { var o = {}; lo.kv.forEach(function (x) { o[x[0]] = x[1]; }); return o; }
   function paaLohko(lohkot) { for (var i = 0; i < lohkot.length; i++) if (kvObj(lohkot[i]).Depot) return lohkot[i]; return null; }
