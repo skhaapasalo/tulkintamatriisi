@@ -267,7 +267,12 @@ body.bw .jakso .liitemerkki { background:#fff !important; color:#000 !important;
 @media screen and (max-width: 700px) {
   #ohjaus { margin:8px; padding-bottom:8px; }
   #ohjaus .paarivi button { padding:7px 9px; }
-  #ohjaus .paarivi #tulostaNappi { display:none; }
+  /* Tulosta puhelimessa pelkkänä kuvakkeena (esim. lähiverkon tulostin tai Tallenna PDF:nä), jotta palkki pysyy yhdellä rivillä */
+  #ohjaus .paarivi #tulostaNappi { font-size:0; padding:7px 10px; }
+  #ohjaus .paarivi #tulostaNappi::before { content:"🖨"; font-size:15px; }
+  #ohjaus .paarivi #yoToggle { font-size:0; padding:7px 10px; }
+  #ohjaus .paarivi #yoToggle::before { content:"🌙"; font-size:15px; }
+  body.yo #ohjaus .paarivi #yoToggle::before { content:"☀️"; }
   .jakso .sivu, .paiva .sivu { width:auto; padding:0 6px; }
   .jakso h1 { font-size:18pt; }
   .jakso td { font-size:10.5pt; padding:4px 2px; } .jakso th { font-size:9pt; padding:3px 2px; }
@@ -796,7 +801,7 @@ var OHJEKIELET = {
 
   /* VIANETSINTA-ALKU – vianetsintätiedosto (☰ → 🐞). tee_pohja.py:n VIANETSINTA = False poistaa tämän kokonaan.
      Tiedosto tallennetaan vain kuljettajan omalle laitteelle; mitään ei lähetetä. Nimirivi (N|) poistetaan. */
-  var VIAN = { versio: "4.3.0", virheet: [] };
+  var VIAN = { versio: "4.3.1", virheet: [] };
   [["fi", "🐞 Vianetsintä", "Tehdään vianetsintätiedosto tälle laitteelle. Siinä on vuorosi ilman nimeä. Anna se vain sille, jota pyysit apuun.", "Jokin meni pieleen. Lataa vianetsintätiedosto ja anna se sille, jolta sait työkalun.", "Datasta ei löytynyt yhtään päivää.", "Lataa vianetsintätiedosto", "Sulje"],
    ["sv", "🐞 Felsökning", "En felsökningsfil sparas på den här enheten. Den innehåller dina turer utan namn. Ge den bara till den du bett om hjälp.", "Något gick fel. Ladda ner felsökningsfilen och ge den till den som gav dig verktyget.", "Inga dagar hittades i datan.", "Ladda ner felsökningsfil", "Stäng"],
    ["en", "🐞 Troubleshooting", "A troubleshooting file will be saved on this device. It contains your shifts without your name. Only give it to the person you asked for help.", "Something went wrong. Download the troubleshooting file and give it to the person who gave you this tool.", "No days were found in the data.", "Download troubleshooting file", "Close"],
@@ -1389,7 +1394,7 @@ var OHJEKIELET = {
     var tb = document.getElementById("teemaToggle"); if (tb) tb.textContent = document.body.classList.contains("bw") ? T("teemaBW") : T("teemaVari");
     var hb = document.getElementById("herToggle"); if (hb) hb.textContent = T("herNappi");
     var kb = document.getElementById("kalenteri"); if (kb) kb.textContent = T("kalNappi");
-    var pb = document.getElementById("tulostaNappi"); if (pb) pb.textContent = T("tulosta");
+    var pb = document.getElementById("tulostaNappi"); if (pb) { pb.textContent = T("tulosta"); pb.title = T("tulosta"); }
     var tl = document.getElementById("tallennaLista"); if (tl) tl.textContent = T("tallennaLista");
     var pl = document.getElementById("poistaLista"); if (pl) pl.textContent = T("poistaLista");
     /* VIANETSINTA-ALKU */ var vn = document.getElementById("vianetsinta"); if (vn) vn.textContent = T("vianetsinta"); /* VIANETSINTA-LOPPU */
