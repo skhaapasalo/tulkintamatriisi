@@ -701,10 +701,12 @@ var OHJEKIELET = {
   var VPV = { length: 7 }; [0, 1, 2, 3, 4, 5, 6].forEach(function (i) { Object.defineProperty(VPV, i, { get: function () { return T("vpv")[i]; } }); });
   var TYYPIT = { L: "Linja-ajo", H: "Halliajo", T: "Tauko", S: "Vaihtoautosiirtymä" };
   var VAKIO = ["Date", "Depot", "Start", "End", "Work time", "Paid time", "Break time"];
-  var ASEMAT = [[/ilmala|pasila/i, "PASILA"], [/söd|sod/i, "SÖDERKULLA"], [/lkk|laukkoski/i, "LAUKKOSKI"],
-                [/sund/i, "SUNDSBERG"], [/kirkkonum/i, "KIRKKONUMMI"], [/kotka/i, "KOTKA"], [/tampere/i, "TAMPERE"], [/lapinkyl|^lap\b/i, "LAPINKYLÄ"], [/ker/i, "KERAVA"]];
+  var ASEMAT = [[/ilmala|pasila/i, "PASILA"], [/söd|sod/i, "SÖDERKULLA"], [/^lkk\b|laukkos/i, "LAUKKOSKI"],
+                [/sund/i, "SUNDSBERG"], [/ojango/i, "OJANGONTIE"], [/kirkkonum/i, "KIRKKONUMMI"], [/kotka/i, "KOTKA"], [/tampere/i, "TAMPERE"], [/lapinkyl|^lap\b/i, "LAPINKYLÄ"],
+                [/kerava|^ker\b/i, "KERAVA"], [/takalaanila|oubus|oulu/i, "OULU"], [/kuopio/i, "KUOPIO"]];
   var ETULIITE = [[/^PAS/i, "PASILA"], [/^(SÖD|SOD)/i, "SÖDERKULLA"], [/^LKK/i, "LAUKKOSKI"],
-                  [/^SUN/i, "SUNDSBERG"], [/^KIR/i, "KIRKKONUMMI"], [/^KOT/i, "KOTKA"], [/^TRE/i, "TAMPERE"], [/^LAP/i, "LAPINKYLÄ"], [/^KER/i, "KERAVA"]];
+                  [/^SUN/i, "SUNDSBERG"], [/^OJA/i, "OJANGONTIE"], [/^KIR/i, "KIRKKONUMMI"], [/^KOT/i, "KOTKA"], [/^TRE/i, "TAMPERE"], [/^LAP/i, "LAPINKYLÄ"], [/^KER/i, "KERAVA"],
+                  [/^(OUL|OUB)/i, "OULU"], [/^KUO/i, "KUOPIO"]];
   /* Pysäköintipaikat (halli A–G, sektori 1–5), esim. {"1036": "B3"}. Tyhjä = käsin täytettävä ruutu. */
   var PAIKAT = {}; try { PAIKAT = JSON.parse(document.getElementById("paikat").textContent || "{}"); } catch (x) {}
   /* Herätykset (valinnaiset): <script id="heratykset"> -lohkon JSON. Tyhjä = ei herätyksiä eikä nappia.
@@ -960,7 +962,7 @@ var OHJEKIELET = {
     ev.sort(function (a, b) { return min(a.alku) - min(b.alku); });
     var liit = ev.filter(function (e) { return e.lohko; }).map(function (e) {
       if (e.tyyppi === "MATKUSTUS") { var as = asemapaikka(depot);
-        return '<span class="li mat"><b>' + T("matkustus") + " " + e.alku + "–" + e.loppu + "</b> " + (min(e.alku) <= min(head.Start) ? T("asemapaikalle") : T("takaisin")) + " " + as.charAt(0) + as.slice(1).toLowerCase() + (e.km ? " · " + T("kmKorv") + " " + h(e.km) : "") + "</span>"; }
+        return '<span class="li mat"><b>' + T("matkustus") + " " + e.alku + "–" + e.loppu + "</b> " + (min(e.alku) <= min(head.Start) ? T("asemapaikalle") : T("takaisin")) + " " + h(as.charAt(0) + as.slice(1).toLowerCase()) + (e.km ? " · " + T("kmKorv") + " " + h(e.km) : "") + "</span>"; }
       return '<span class="li var"><b>' + h(e.tyyppi.toUpperCase()) + " " + e.alku + "–" + e.loppu + "</b> " + T("ajotoimisto") + (e.tunnit ? " · " + hmin(kesto(e.tunnit)) : "") + "</span>"; });
     var liiteRivi = liit.length ? '<div class="liitteet"><span class="otsake">' + T("liittyy") + '</span>' + liit.join("") + "</div>" : "";
     var ah = aamuHer(paivanAlku(p, paa));
@@ -988,7 +990,7 @@ var OHJEKIELET = {
         if (t === "matkustus") {
           var s = min(e.alku) <= min(head.Start) ? T("asemapaikalle") : T("takaisin"), as = asemapaikka(depot);
           rows.push('<tr class="matka">' + A + '<td class="linja"><span class="lap mat">' + T("matkustus") + '</span></td><td class="reitti">' + e.alku + " – " + e.loppu + " · " + s + " " +
-            as.charAt(0) + as.slice(1).toLowerCase() + (e.km ? ' <span class="kulku">' + T("KMKORV") + " " + h(e.km) + "</span>" : "") + "</td></tr>");
+            h(as.charAt(0) + as.slice(1).toLowerCase()) + (e.km ? ' <span class="kulku">' + T("KMKORV") + " " + h(e.km) + "</span>" : "") + "</td></tr>");
         } else rows.push('<tr class="väliin"><td colspan="3"></td></tr><tr class="varar">' + A + '<td class="linja"><span class="lap vara">' + h(e.tyyppi.toUpperCase()) + '</span></td><td class="reitti"><b>' + e.alku + " – " + e.loppu +
           "</b> " + T("ajotoimistoRivi") + (e.tunnit ? ' <span class="kulku">' + hmin(kesto(e.tunnit)) + "</span>" : "") + '</td></tr><tr class="väliin"><td colspan="3"></td></tr>');
       } else if (t.indexOf("linja-ajo") === 0) {
